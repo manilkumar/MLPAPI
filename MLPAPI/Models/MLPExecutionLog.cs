@@ -6,8 +6,12 @@ using System.Web;
 
 namespace MLPAPI.Models
 {
+    /// <summary>
+    /// Used to Log Info,Error,Warning
+    /// </summary>
     public class MLPExecutionLogger
     {
+
         public static void Error(string name, string message, Exception ex)
         {
             ILog log = LogManager.GetLogger(name);
@@ -43,7 +47,8 @@ namespace MLPAPI.Models
 
             ILog log = LogManager.GetLogger(name);
 
-            if (log.IsWarnEnabled) {
+            if (log.IsWarnEnabled)
+            {
 
                 log.Warn(message);
             }

@@ -30,12 +30,21 @@ namespace MLPAPI.Models
         }
 
         /// <summary>
-        /// Gets db name from config
+        /// Gets db name 
         /// </summary>
         /// <returns>DB name</returns>
         public static string GetDB()
         {
-            return    MLPConstants.DefaultDBName;
+            return MLPConstants.DefaultDBName;
+        }
+
+        /// <summary>
+        /// Gets default collection name
+        /// </summary>
+        /// <returns>Collection name</returns>
+        public static string GetCollectionName()
+        {
+            return MLPConstants.DefaultCollectionName;
         }
 
     }

@@ -13,9 +13,11 @@ namespace MLPAPI.Models
         public const string DefaultPort = "27017";
         public const string DefaultServerIP = "localhost";
         public const string DefaultDBName = "MLP";
+        public const string DefaultCollectionName = "AlgorithmExecution";
         public const string ConnectionStringPrefix = "mongodb://";
         public const string JenkinsUsername = "manilkumar";
         public const string JenkinsPassword = "AnilJenkins";
         public const string JenkinsHost = "http://10.200.0.199:8080";
+        public const string JenkinsJob = "RunDockerImage";
     }
 }

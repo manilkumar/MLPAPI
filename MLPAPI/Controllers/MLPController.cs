@@ -1,6 +1,8 @@
 ﻿using JenkinsClient;
 using MLPAPI.Models;
 using MongoDB.Bson;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,6 +10,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
@@ -17,7 +20,10 @@ namespace MLPAPI.Controllers
     public class MLPController : ApiController
     {
 
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public async Task<HttpResponseMessage> GetAllLogs()
         {
 
@@ -27,7 +33,7 @@ namespace MLPAPI.Controllers
 
                 var result = await new MongoDBWrapper().GetLogsDetails();
 
-                return  Request.CreateResponse(HttpStatusCode.OK, result);
+                return Request.CreateResponse(HttpStatusCode.OK, result);
             }
             catch (Exception ex)
             {
@@ -37,26 +43,8 @@ namespace MLPAPI.Controllers
             }
         }
 
-        [HttpPost]
-        public async Task<HttpResponseMessage> RunAlgorithm([FromBody]LogDetails logModel)
-        {
-            try
-            {
-                MongoDBWrapper mongoBase = new MongoDBWrapper();
-
-                var result = await mongoBase.RunJenkinsJob(logModel);
-
-                return Request.CreateResponse(HttpStatusCode.OK, result);
-
-
-            }
-            catch (Exception ex)
-            {
-                return Request.CreateResponse(HttpStatusCode.InternalServerError, "Exception occured at the time fetching data on server.\n" + ex.ToString());
-            }
-        }
         /// <summary>
-        /// Run Jenkins Job
+        /// Call Jenkins Job
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
@@ -65,7 +53,9 @@ namespace MLPAPI.Controllers
         {
             try
             {
-              
+
+                //Logging Info
+                MLPExecutionLogger.Info("CTPhantom", "Calling Jenkins Job, IP: " + HttpContext.Current.Request.UserHostAddress + ", Client: " + HttpContext.Current.Request.Url.AbsoluteUri);
 
                 MongoDBWrapper mongoBase = new MongoDBWrapper();
 
@@ -75,37 +65,74 @@ namespace MLPAPI.Controllers
 
                 var result = await mongoBase.RunJenkinsJob(collection);
 
-                return Request.CreateResponse(HttpStatusCode.OK, "");
-
+                return Request.CreateResponse(HttpStatusCode.OK, result);
 
             }
             catch (Exception ex)
             {
+                MLPExecutionLogger.Error("CTPhantom", ex.Message);
+
                 return Request.CreateResponse(HttpStatusCode.InternalServerError, ex.Message);
             }
         }
 
-        [HttpPost]
-        public async Task<HttpResponseMessage> Execute(string algorithm)
+        /// <summary>
+        /// getting build details of a job
+        /// </summary>
+        /// <param name="jobName"></param>
+        /// <param name="buildNo"></param>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<HttpResponseMessage> GetBuildDetails(string jobName, int buildNo)
         {
-
-            var client = Client.Create(
-                MongoDBWrapper.JenkinsHost, MongoDBWrapper.JenkinsUsername, MongoDBWrapper.JenkinsPassword);
-
-            var job = client.GetJob("InvokeRemotely");
-
-            var buildTask = await job.BuildAsync(new Dictionary<string, string>()
+            try
             {
-                {"imageName",algorithm}
-            });
+                MLPExecutionLogger.Info("CTPhantom", "Getting build details, Params:" + jobName + "," + buildNo + ", IP: " + HttpContext.Current.Request.UserHostAddress + ", Client: " + HttpContext.Current.Request.Url.AbsoluteUri);
 
-            string _id = await MongoDBWrapper.CreateRequestLog(new LogDetails() { Algorithm = algorithm });
+                var jenkins_client = Client.Create(MLPConstants.JenkinsHost, MLPConstants.JenkinsUsername, MLPConstants.JenkinsPassword);
 
-            await buildTask.WaitForBuildStart();
+                var response = await jenkins_client.GetBuildDetails(jobName, buildNo);
 
-            await buildTask.WaitForBuildEnd();
+                return Request.CreateResponse(HttpStatusCode.OK, response);
 
-            return Request.CreateResponse(_id);
+            }
+            catch (Exception ex)
+            {
+                MLPExecutionLogger.Error("CTPhantom", ex.Message);
+
+                return Request.CreateResponse(HttpStatusCode.OK, ex.Message);
+
+            }
+
         }
+
+        /// <summary>
+        /// getting build progress of a job
+        /// </summary>
+        /// <param name="jobName"></param>
+        /// <param name="buildNo"></param>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<HttpResponseMessage> GetBuildProgress(string jobName, int buildNo)
+        {
+            try
+            {
+                MLPExecutionLogger.Info("CTPhantom", "Getting build progress, Params:" + jobName + "," + buildNo + ", IP: " + HttpContext.Current.Request.UserHostAddress + ", Client: " + HttpContext.Current.Request.Url.AbsoluteUri);
+
+                var jenkins_client = Client.Create(MLPConstants.JenkinsHost, MLPConstants.JenkinsUsername, MLPConstants.JenkinsPassword);
+
+                var response = await jenkins_client.GetBuildProgress(jobName, buildNo);
+
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+            catch (Exception ex)
+            {
+                MLPExecutionLogger.Error("CTPhantom", ex.Message);
+
+                return Request.CreateResponse(HttpStatusCode.OK, ex.Message);
+
+            }
+        }
+
     }
 }

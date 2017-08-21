@@ -8,12 +8,16 @@ namespace MLPAPI.Models
 {
     public static class MongoHelper
     {
+        /// <summary>
+        /// Initializing mongo db connection
+        /// </summary>
+        /// <returns></returns>
         public static IMongoDatabase InitializeMongo()
         {
 
-            MongoClient mongoClient = new MongoClient("mongodb://localhost:27017");
+            MongoClient mongoClient = new MongoClient(MLPConstants.ConnectionStringPrefix + MongoDBConfig.GetServer() + ":" + MongoDBConfig.GetPort());
 
-            return mongoClient.GetDatabase("MLP");
+            return mongoClient.GetDatabase(MongoDBConfig.GetDB());
 
         }
     }
